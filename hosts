@@ -1,0 +1,126 @@
+[OSEv3:vars]
+###########################################################################
+### Ansible Vars
+###########################################################################
+timeout=60
+ansible_become=true
+ansible_ssh_user=root
+
+openshift_node_groups=[{'name': 'node-config-master', 'labels': ['node-role.kubernetes.io/master=true']}, {'name': 'node-config-infra', 'labels': ['node-role.kubernetes.io/infra=true']}, {'name': 'node-config-compute', 'labels': ['node-role.kubernetes.io/compute=true']}]
+
+###########################################################################
+### OpenShift Basic Vars
+###########################################################################
+openshift_deployment_type=openshift-enterprise
+openshift_disable_check="disk_availability,memory_availability,docker_storage" 
+
+# default project node selector
+osm_default_node_selector='node-role.kubernetes.io/compute=true'
+
+###########################################################################
+### OpenShift Optional Vars
+###########################################################################
+
+# Enable cockpit
+osm_use_cockpit=true 
+osm_cockpit_plugins=['cockpit-kubernetes']
+
+# Configure additional projects
+openshift_additional_projects={'my-infra-project-test': {'default_node_selector': 'node-role.kubernetes.io/compute=true'}} 
+
+
+###########################################################################
+### OpenShift Master Vars
+###########################################################################
+
+openshift_master_api_port=8443  
+openshift_master_console_port=8443
+
+openshift_master_cluster_method=native 
+openshift_master_cluster_hostname=privatelb.mine.kt.com
+openshift_master_cluster_public_hostname=publiclb.mine.kt.com 
+openshift_master_default_subdomain=apps.mine.kt.com
+
+###########################################################################
+### OpenShift Network Vars
+###########################################################################
+
+#osm_cluster_network_cidr=10.1.0.0/16 
+#openshift_portal_net=172.30.0.0/16 
+
+#os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+os_sdn_network_plugin_name='redhat/openshift-ovs-subnet' 
+
+
+###########################################################################
+### OpenShift Authentication Vars
+###########################################################################
+
+# htpasswd auth
+#openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}] 
+# Defining htpasswd users
+#openshift_master_htpasswd_users={'user1': '<pre-hashed password>', 'user2': '<pre-hashed password>'}
+# or
+#openshift_master_htpasswd_file=/root/htpasswd.openshift 
+
+###########################################################################
+### OpenShift Router and Registry Vars
+###########################################################################
+
+openshift_hosted_router_selector='node-role.kubernetes.io/infra=true'
+openshift_hosted_router_replicas=2 
+
+#openshift_hosted_registry_selector='node-role.kubernetes.io/infra=true'
+openshift_router_selector='node-role.kubernetes.io/infra=true'
+openshift_router_replicas=2
+
+openshift_registry_selector='node-role.kubernetes.io/infra=true'
+openshift_registry_replicas=1
+#oreg_url=infranode1.mine.kt.com/openshift3/ose-${component}:${version}
+#openshift_examples_modify_imagestreams=true
+
+oreg_auth_user=admin
+oreg_auth_password='welcome1'
+
+#openshift_cockpit_deployer_prefix='infranode1.mine.kt.com/openshift3/'
+#openshift_cockpit_deployer_version='3.10.1'
+
+
+#openshift_hosted_registry_storage_kind=nfs 
+#openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+#openshift_hosted_registry_storage_nfs_directory=/prplinux/nfs
+#openshift_hosted_registry_storage_nfs_options='*(rw,root_squash)'
+#openshift_hosted_registry_storage_volume_name=registry
+#openshift_hosted_registry_storage_volume_size=20Gi
+
+###########################################################################
+[OSEv3:children]
+lb
+masters
+etcd
+nodes
+nfs
+
+[lb]
+privatelb.mine.kt.com
+
+[masters]
+master.mine.kt.com
+
+[etcd]
+etcd.mine.kt.com
+
+
+[nodes]
+## These are the masters
+master.mine.kt.com openshift_node_group_name="node-config-master"
+
+## These are infranodes
+infranode1.mine.kt.com openshift_node_group_name="node-config-infra"
+
+## These are regular workload nodes
+node1.mine.kt.com openshift_node_group_name="node-config-compute"
+
+
+[nfs]
+nfs.mine.kt.com 
